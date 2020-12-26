@@ -83,27 +83,14 @@ struct RigidOptimizerOption {
 
 class RigidOptimizer {
 public:
-    RigidOptimizer(
-            const std::shared_ptr<geometry::TriangleMesh>& mesh,
-            const std::vector<std::shared_ptr<geometry::RGBDImage>>&
-                    images_rgbd,
-            const std::shared_ptr<camera::PinholeCameraTrajectory>&
-                    camera_trajectory,
-            const std::vector<std::shared_ptr<geometry::Image>>& images_gray,
-            const std::vector<std::shared_ptr<geometry::Image>>& images_dx,
-            const std::vector<std::shared_ptr<geometry::Image>>& images_dy,
-            const std::vector<std::shared_ptr<geometry::Image>>& images_color,
-            const std::vector<std::shared_ptr<geometry::Image>>& images_depth)
-        : mesh_(mesh),
-          images_rgbd_(images_rgbd),
-          camera_trajectory_(camera_trajectory),
-          images_gray_(images_gray),
-          images_dx_(images_dx),
-          images_dy_(images_dy),
-          images_color_(images_color),
-          images_depth_(images_depth) {}
+    RigidOptimizer(const geometry::TriangleMesh& mesh,
+                   const std::vector<std::shared_ptr<geometry::RGBDImage>>&
+                           images_rgbd,
+                   const camera::PinholeCameraTrajectory& camera_trajectory);
 
     void Run(const RigidOptimizerOption& option);
+
+    std::shared_ptr<geometry::TriangleMesh> GetMesh() const { return mesh_; }
 
 protected:
     std::shared_ptr<geometry::TriangleMesh> mesh_;

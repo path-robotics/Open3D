@@ -173,19 +173,10 @@ void RigidOptimizer::Run(const RigidOptimizerOption& option) {
                             option.invisible_vertex_color_knn_);
 }
 
-std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
+RigidOptimizer::RigidOptimizer(
         const geometry::TriangleMesh& mesh,
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
-        const camera::PinholeCameraTrajectory& camera_trajectory,
-        const RigidOptimizerOption& option) {
-    std::shared_ptr<geometry::TriangleMesh> mesh_;
-    std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
-    std::shared_ptr<camera::PinholeCameraTrajectory> camera_trajectory_;
-    std::vector<std::shared_ptr<geometry::Image>> images_gray_;
-    std::vector<std::shared_ptr<geometry::Image>> images_dx_;
-    std::vector<std::shared_ptr<geometry::Image>> images_dy_;
-    std::vector<std::shared_ptr<geometry::Image>> images_color_;
-    std::vector<std::shared_ptr<geometry::Image>> images_depth_;
+        const camera::PinholeCameraTrajectory& camera_trajectory) {
     mesh_ = std::make_shared<geometry::TriangleMesh>(mesh);
     images_rgbd_ = images_rgbd;
     camera_trajectory_ = std::make_shared<camera::PinholeCameraTrajectory>(
@@ -208,12 +199,16 @@ std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
         images_color_.push_back(color);
         images_depth_.push_back(depth);
     }
+}
 
-    RigidOptimizer optimizer(mesh_, images_rgbd_, camera_trajectory_,
-                             images_gray_, images_dx_, images_dy_,
-                             images_color_, images_depth_);
+std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
+        const geometry::TriangleMesh& mesh,
+        const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
+        const camera::PinholeCameraTrajectory& camera_trajectory,
+        const RigidOptimizerOption& option) {
+    RigidOptimizer optimizer(mesh, images_rgbd, camera_trajectory);
     optimizer.Run(option);
-    return mesh_;
+    return optimizer.GetMesh();
 }
 
 }  // namespace color_map
