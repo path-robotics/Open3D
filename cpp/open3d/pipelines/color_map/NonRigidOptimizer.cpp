@@ -29,7 +29,7 @@
 #include <memory>
 #include <vector>
 
-#include "open3d/pipelines/color_map/ColorMapUtils.h"
+#include "open3d/pipelines/color_map/BaseOptimizer.h"
 #include "open3d/pipelines/color_map/ImageWarpingField.h"
 
 namespace Eigen {
