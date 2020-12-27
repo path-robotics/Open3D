@@ -222,6 +222,41 @@ static void ComputeJacobianAndResidualNonRigid(
     r = (gray - proxy_intensity[vid]);
 }
 
+class NonRigidOptimizer {
+public:
+    NonRigidOptimizer(
+            const std::shared_ptr<geometry::TriangleMesh>& mesh,
+            const std::vector<std::shared_ptr<geometry::RGBDImage>>&
+                    images_rgbd,
+            const std::shared_ptr<camera::PinholeCameraTrajectory>&
+                    camera_trajectory,
+            const std::vector<std::shared_ptr<geometry::Image>>& images_gray,
+            const std::vector<std::shared_ptr<geometry::Image>>& images_dx,
+            const std::vector<std::shared_ptr<geometry::Image>>& images_dy,
+            const std::vector<std::shared_ptr<geometry::Image>>& images_color,
+            const std::vector<std::shared_ptr<geometry::Image>>& images_depth)
+        : mesh_(mesh),
+          images_rgbd_(images_rgbd),
+          camera_trajectory_(camera_trajectory),
+          images_gray_(images_gray),
+          images_dx_(images_dx),
+          images_dy_(images_dy),
+          images_color_(images_color),
+          images_depth_(images_depth) {}
+
+    void Run(const NonRigidOptimizerOption& option);
+
+protected:
+    std::shared_ptr<geometry::TriangleMesh> mesh_;
+    std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
+    std::shared_ptr<camera::PinholeCameraTrajectory> camera_trajectory_;
+    std::vector<std::shared_ptr<geometry::Image>> images_gray_;
+    std::vector<std::shared_ptr<geometry::Image>> images_dx_;
+    std::vector<std::shared_ptr<geometry::Image>> images_dy_;
+    std::vector<std::shared_ptr<geometry::Image>> images_color_;
+    std::vector<std::shared_ptr<geometry::Image>> images_depth_;
+};
+
 void NonRigidOptimizer::Run(const NonRigidOptimizerOption& option) {
     utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
     auto images_mask = CreateDepthBoundaryMasks(

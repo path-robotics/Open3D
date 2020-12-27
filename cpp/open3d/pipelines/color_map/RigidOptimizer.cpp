@@ -84,6 +84,28 @@ static void ComputeJacobianAndResidualRigid(
     w = 1.0;  // Dummy.
 }
 
+class RigidOptimizer {
+public:
+    RigidOptimizer(const geometry::TriangleMesh& mesh,
+                   const std::vector<std::shared_ptr<geometry::RGBDImage>>&
+                           images_rgbd,
+                   const camera::PinholeCameraTrajectory& camera_trajectory);
+
+    void Run(const RigidOptimizerOption& option);
+
+    std::shared_ptr<geometry::TriangleMesh> GetMesh() const { return mesh_; }
+
+protected:
+    std::shared_ptr<geometry::TriangleMesh> mesh_;
+    std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
+    std::shared_ptr<camera::PinholeCameraTrajectory> camera_trajectory_;
+    std::vector<std::shared_ptr<geometry::Image>> images_gray_;
+    std::vector<std::shared_ptr<geometry::Image>> images_dx_;
+    std::vector<std::shared_ptr<geometry::Image>> images_dy_;
+    std::vector<std::shared_ptr<geometry::Image>> images_color_;
+    std::vector<std::shared_ptr<geometry::Image>> images_depth_;
+};
+
 void RigidOptimizer::Run(const RigidOptimizerOption& option) {
     utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
     std::vector<std::shared_ptr<geometry::Image>> images_mask =
