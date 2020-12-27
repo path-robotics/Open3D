@@ -226,9 +226,10 @@ geometry::TriangleMesh RunNonRigidOptimizer(
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
         const camera::PinholeCameraTrajectory& camera_trajectory,
         const NonRigidOptimizerOption& option) {
-    // opt_mesh and opt_camera_trajectory will be optimized.
+    // The following properties will change during optimization.
     geometry::TriangleMesh opt_mesh = mesh;
     camera::PinholeCameraTrajectory opt_camera_trajectory = camera_trajectory;
+    std::vector<ImageWarpingField> warping_fields;
 
     // The following properties remain unchanged during optimization.
     std::vector<std::shared_ptr<geometry::Image>> images_gray;
@@ -239,9 +240,8 @@ geometry::TriangleMesh RunNonRigidOptimizer(
     std::vector<std::shared_ptr<geometry::Image>> images_mask;
     std::vector<std::vector<int>> visibility_vertex_to_image;
     std::vector<std::vector<int>> visibility_image_to_vertex;
+    std::vector<ImageWarpingField> warping_fields_init;
 
-    // images_gray, images_dx, images_dy, images_color, images_depth
-    // remain unachanged through out the optimizations.
     utility::LogDebug("[ColorMapOptimization] :: CreateGradientImages");
     for (size_t i = 0; i < images_rgbd.size(); i++) {
         auto gray_image = images_rgbd[i]->color_.CreateFloatImage();
@@ -271,9 +271,9 @@ geometry::TriangleMesh RunNonRigidOptimizer(
                     option.depth_threshold_for_visibility_check_);
 
     utility::LogDebug("[ColorMapOptimization] :: Run Non-Rigid Optimization");
-    std::vector<ImageWarpingField> warping_fields = CreateWarpingFields(
-            images_gray, option.number_of_vertical_anchors_);
-    std::vector<ImageWarpingField> warping_fields_init = CreateWarpingFields(
+    warping_fields = CreateWarpingFields(images_gray,
+                                         option.number_of_vertical_anchors_);
+    warping_fields_init = CreateWarpingFields(
             images_gray, option.number_of_vertical_anchors_);
     std::vector<double> proxy_intensity;
     size_t n_vertex = opt_mesh.vertices_.size();
