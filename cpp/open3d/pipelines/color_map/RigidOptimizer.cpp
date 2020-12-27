@@ -84,12 +84,12 @@ static void ComputeJacobianAndResidualRigid(
     w = 1.0;  // Dummy.
 }
 
-std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
+geometry::TriangleMesh RunRigidOptimizer(
         const geometry::TriangleMesh& mesh,
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
         const camera::PinholeCameraTrajectory& camera_trajectory,
         const RigidOptimizerOption& option) {
-    std::shared_ptr<geometry::TriangleMesh> opt_mesh;
+    geometry::TriangleMesh opt_mesh = mesh;
     camera::PinholeCameraTrajectory opt_camera_trajectory;
     std::vector<std::shared_ptr<geometry::Image>> images_gray;
     std::vector<std::shared_ptr<geometry::Image>> images_dx;
@@ -100,7 +100,6 @@ std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
     std::vector<std::vector<int>> visibility_vertex_to_image;
     std::vector<std::vector<int>> visibility_image_to_vertex;
 
-    opt_mesh = std::make_shared<geometry::TriangleMesh>(mesh);
     opt_camera_trajectory = camera_trajectory;
 
     // images_gray, images_dx, images_dy, images_color, images_depth
@@ -129,7 +128,7 @@ std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
     utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
     std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
             CreateVertexAndImageVisibility(
-                    *opt_mesh, images_depth, images_mask, opt_camera_trajectory,
+                    opt_mesh, images_depth, images_mask, opt_camera_trajectory,
                     option.maximum_allowable_depth_,
                     option.depth_threshold_for_visibility_check_);
 
@@ -137,7 +136,7 @@ std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
     std::vector<double> proxy_intensity;
     int total_num_ = 0;
     int n_camera = int(opt_camera_trajectory.parameters_.size());
-    SetProxyIntensityForVertex(*opt_mesh, images_gray, utility::nullopt,
+    SetProxyIntensityForVertex(opt_mesh, images_gray, utility::nullopt,
                                opt_camera_trajectory,
                                visibility_vertex_to_image, proxy_intensity,
                                option.image_boundary_margin_);
@@ -163,9 +162,9 @@ std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
                                 double& w) {
                 w = 1.0;  // Dummy.
                 ComputeJacobianAndResidualRigid(
-                        i, J_r, r, w, *opt_mesh, proxy_intensity,
-                        images_gray[c], images_dx[c], images_dy[c], intr,
-                        extrinsic, visibility_image_to_vertex[c],
+                        i, J_r, r, w, opt_mesh, proxy_intensity, images_gray[c],
+                        images_dx[c], images_dy[c], intr, extrinsic,
+                        visibility_image_to_vertex[c],
                         option.image_boundary_margin_);
             };
             Eigen::Matrix6d JTJ;
@@ -193,14 +192,14 @@ std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
         }
         utility::LogDebug("Residual error : {:.6f} (avg : {:.6f})", residual,
                           residual / total_num_);
-        SetProxyIntensityForVertex(*opt_mesh, images_gray, utility::nullopt,
+        SetProxyIntensityForVertex(opt_mesh, images_gray, utility::nullopt,
                                    opt_camera_trajectory,
                                    visibility_vertex_to_image, proxy_intensity,
                                    option.image_boundary_margin_);
     }
 
     utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
-    SetGeometryColorAverage(*opt_mesh, images_color, utility::nullopt,
+    SetGeometryColorAverage(opt_mesh, images_color, utility::nullopt,
                             opt_camera_trajectory, visibility_vertex_to_image,
                             option.image_boundary_margin_,
                             option.invisible_vertex_color_knn_);
