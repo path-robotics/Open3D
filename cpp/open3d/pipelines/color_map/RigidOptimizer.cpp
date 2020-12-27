@@ -84,135 +84,11 @@ static void ComputeJacobianAndResidualRigid(
     w = 1.0;  // Dummy.
 }
 
-class RigidOptimizer {
-public:
-    RigidOptimizer(const geometry::TriangleMesh& mesh,
-                   const std::vector<std::shared_ptr<geometry::RGBDImage>>&
-                           images_rgbd,
-                   const camera::PinholeCameraTrajectory& camera_trajectory) {
-        optimized_mesh_ = std::make_shared<geometry::TriangleMesh>(mesh);
-        images_rgbd_ = images_rgbd;
-        camera_trajectory_ = std::make_shared<camera::PinholeCameraTrajectory>(
-                camera_trajectory);
-
-        // images_gray_, images_dx_, images_dy_, images_color_, images_depth_
-        // remain unachanged through out the optimizations.
-        utility::LogDebug("[ColorMapOptimization] :: CreateGradientImages");
-        for (size_t i = 0; i < images_rgbd_.size(); i++) {
-            auto gray_image = images_rgbd_[i]->color_.CreateFloatImage();
-            auto gray_image_filtered =
-                    gray_image->Filter(geometry::Image::FilterType::Gaussian3);
-            images_gray_.push_back(gray_image_filtered);
-            images_dx_.push_back(gray_image_filtered->Filter(
-                    geometry::Image::FilterType::Sobel3Dx));
-            images_dy_.push_back(gray_image_filtered->Filter(
-                    geometry::Image::FilterType::Sobel3Dy));
-            auto color =
-                    std::make_shared<geometry::Image>(images_rgbd_[i]->color_);
-            auto depth =
-                    std::make_shared<geometry::Image>(images_rgbd_[i]->depth_);
-            images_color_.push_back(color);
-            images_depth_.push_back(depth);
-        }
-    }
-
-    void Run(const RigidOptimizerOption& option) {
-        utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
-        std::vector<std::shared_ptr<geometry::Image>> images_mask =
-                CreateDepthBoundaryMasks(
-                        images_depth_,
-                        option.depth_threshold_for_discontinuity_check_,
-                        option.half_dilation_kernel_size_for_discontinuity_map_);
-
-        utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
-        std::vector<std::vector<int>> visibility_vertex_to_image;
-        std::vector<std::vector<int>> visibility_image_to_vertex;
-        std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
-                CreateVertexAndImageVisibility(
-                        *optimized_mesh_, images_depth_, images_mask,
-                        *camera_trajectory_, option.maximum_allowable_depth_,
-                        option.depth_threshold_for_visibility_check_);
-
-        utility::LogDebug("[ColorMapOptimization] :: Run Rigid Optimization");
-        std::vector<double> proxy_intensity;
-        int total_num_ = 0;
-        int n_camera = int(camera_trajectory_->parameters_.size());
-        SetProxyIntensityForVertex(*optimized_mesh_, images_gray_,
-                                   utility::nullopt, *camera_trajectory_,
-                                   visibility_vertex_to_image, proxy_intensity,
-                                   option.image_boundary_margin_);
-        for (int itr = 0; itr < option.maximum_iteration_; itr++) {
-            utility::LogDebug("[Iteration {:04d}] ", itr + 1);
-            double residual = 0.0;
-            total_num_ = 0;
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static)
-#endif
-            for (int c = 0; c < n_camera; c++) {
-                Eigen::Matrix4d pose;
-                pose = camera_trajectory_->parameters_[c].extrinsic_;
-
-                auto intrinsic = camera_trajectory_->parameters_[c]
-                                         .intrinsic_.intrinsic_matrix_;
-                auto extrinsic = camera_trajectory_->parameters_[c].extrinsic_;
-                Eigen::Matrix4d intr = Eigen::Matrix4d::Zero();
-                intr.block<3, 3>(0, 0) = intrinsic;
-                intr(3, 3) = 1.0;
-
-                auto f_lambda = [&](int i, Eigen::Vector6d& J_r, double& r,
-                                    double& w) {
-                    w = 1.0;  // Dummy.
-                    ComputeJacobianAndResidualRigid(
-                            i, J_r, r, w, *optimized_mesh_, proxy_intensity,
-                            images_gray_[c], images_dx_[c], images_dy_[c], intr,
-                            extrinsic, visibility_image_to_vertex[c],
-                            option.image_boundary_margin_);
-                };
-                Eigen::Matrix6d JTJ;
-                Eigen::Vector6d JTr;
-                double r2;
-                std::tie(JTJ, JTr,
-                         r2) = utility::ComputeJTJandJTr<Eigen::Matrix6d,
-                                                         Eigen::Vector6d>(
-                        f_lambda, int(visibility_image_to_vertex[c].size()),
-                        false);
-
-                bool is_success;
-                Eigen::Matrix4d delta;
-                std::tie(is_success, delta) =
-                        utility::SolveJacobianSystemAndObtainExtrinsicMatrix(
-                                JTJ, JTr);
-                pose = delta * pose;
-                camera_trajectory_->parameters_[c].extrinsic_ = pose;
-#ifdef _OPENMP
-#pragma omp critical
-#endif
-                {
-                    residual += r2;
-                    total_num_ += int(visibility_image_to_vertex[c].size());
-                }
-            }
-            utility::LogDebug("Residual error : {:.6f} (avg : {:.6f})",
-                              residual, residual / total_num_);
-            SetProxyIntensityForVertex(
-                    *optimized_mesh_, images_gray_, utility::nullopt,
-                    *camera_trajectory_, visibility_vertex_to_image,
-                    proxy_intensity, option.image_boundary_margin_);
-        }
-
-        utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
-        SetGeometryColorAverage(*optimized_mesh_, images_color_,
-                                utility::nullopt, *camera_trajectory_,
-                                visibility_vertex_to_image,
-                                option.image_boundary_margin_,
-                                option.invisible_vertex_color_knn_);
-    }
-
-    std::shared_ptr<geometry::TriangleMesh> GetMesh() const {
-        return optimized_mesh_;
-    }
-
-protected:
+std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
+        const geometry::TriangleMesh& mesh,
+        const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
+        const camera::PinholeCameraTrajectory& camera_trajectory,
+        const RigidOptimizerOption& option) {
     std::shared_ptr<geometry::TriangleMesh> optimized_mesh_;
     std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
     std::shared_ptr<camera::PinholeCameraTrajectory> camera_trajectory_;
@@ -221,16 +97,118 @@ protected:
     std::vector<std::shared_ptr<geometry::Image>> images_dy_;
     std::vector<std::shared_ptr<geometry::Image>> images_color_;
     std::vector<std::shared_ptr<geometry::Image>> images_depth_;
-};
 
-std::shared_ptr<geometry::TriangleMesh> RunRigidOptimizer(
-        const geometry::TriangleMesh& mesh,
-        const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
-        const camera::PinholeCameraTrajectory& camera_trajectory,
-        const RigidOptimizerOption& option) {
-    RigidOptimizer optimizer(mesh, images_rgbd, camera_trajectory);
-    optimizer.Run(option);
-    return optimizer.GetMesh();
+    optimized_mesh_ = std::make_shared<geometry::TriangleMesh>(mesh);
+    images_rgbd_ = images_rgbd;
+    camera_trajectory_ = std::make_shared<camera::PinholeCameraTrajectory>(
+            camera_trajectory);
+
+    // images_gray_, images_dx_, images_dy_, images_color_, images_depth_
+    // remain unachanged through out the optimizations.
+    utility::LogDebug("[ColorMapOptimization] :: CreateGradientImages");
+    for (size_t i = 0; i < images_rgbd_.size(); i++) {
+        auto gray_image = images_rgbd_[i]->color_.CreateFloatImage();
+        auto gray_image_filtered =
+                gray_image->Filter(geometry::Image::FilterType::Gaussian3);
+        images_gray_.push_back(gray_image_filtered);
+        images_dx_.push_back(gray_image_filtered->Filter(
+                geometry::Image::FilterType::Sobel3Dx));
+        images_dy_.push_back(gray_image_filtered->Filter(
+                geometry::Image::FilterType::Sobel3Dy));
+        auto color = std::make_shared<geometry::Image>(images_rgbd_[i]->color_);
+        auto depth = std::make_shared<geometry::Image>(images_rgbd_[i]->depth_);
+        images_color_.push_back(color);
+        images_depth_.push_back(depth);
+    }
+
+    utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
+    std::vector<std::shared_ptr<geometry::Image>> images_mask =
+            CreateDepthBoundaryMasks(
+                    images_depth_,
+                    option.depth_threshold_for_discontinuity_check_,
+                    option.half_dilation_kernel_size_for_discontinuity_map_);
+
+    utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
+    std::vector<std::vector<int>> visibility_vertex_to_image;
+    std::vector<std::vector<int>> visibility_image_to_vertex;
+    std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
+            CreateVertexAndImageVisibility(
+                    *optimized_mesh_, images_depth_, images_mask,
+                    *camera_trajectory_, option.maximum_allowable_depth_,
+                    option.depth_threshold_for_visibility_check_);
+
+    utility::LogDebug("[ColorMapOptimization] :: Run Rigid Optimization");
+    std::vector<double> proxy_intensity;
+    int total_num_ = 0;
+    int n_camera = int(camera_trajectory_->parameters_.size());
+    SetProxyIntensityForVertex(*optimized_mesh_, images_gray_, utility::nullopt,
+                               *camera_trajectory_, visibility_vertex_to_image,
+                               proxy_intensity, option.image_boundary_margin_);
+    for (int itr = 0; itr < option.maximum_iteration_; itr++) {
+        utility::LogDebug("[Iteration {:04d}] ", itr + 1);
+        double residual = 0.0;
+        total_num_ = 0;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int c = 0; c < n_camera; c++) {
+            Eigen::Matrix4d pose;
+            pose = camera_trajectory_->parameters_[c].extrinsic_;
+
+            auto intrinsic = camera_trajectory_->parameters_[c]
+                                     .intrinsic_.intrinsic_matrix_;
+            auto extrinsic = camera_trajectory_->parameters_[c].extrinsic_;
+            Eigen::Matrix4d intr = Eigen::Matrix4d::Zero();
+            intr.block<3, 3>(0, 0) = intrinsic;
+            intr(3, 3) = 1.0;
+
+            auto f_lambda = [&](int i, Eigen::Vector6d& J_r, double& r,
+                                double& w) {
+                w = 1.0;  // Dummy.
+                ComputeJacobianAndResidualRigid(
+                        i, J_r, r, w, *optimized_mesh_, proxy_intensity,
+                        images_gray_[c], images_dx_[c], images_dy_[c], intr,
+                        extrinsic, visibility_image_to_vertex[c],
+                        option.image_boundary_margin_);
+            };
+            Eigen::Matrix6d JTJ;
+            Eigen::Vector6d JTr;
+            double r2;
+            std::tie(JTJ, JTr, r2) =
+                    utility::ComputeJTJandJTr<Eigen::Matrix6d, Eigen::Vector6d>(
+                            f_lambda, int(visibility_image_to_vertex[c].size()),
+                            false);
+
+            bool is_success;
+            Eigen::Matrix4d delta;
+            std::tie(is_success, delta) =
+                    utility::SolveJacobianSystemAndObtainExtrinsicMatrix(JTJ,
+                                                                         JTr);
+            pose = delta * pose;
+            camera_trajectory_->parameters_[c].extrinsic_ = pose;
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+            {
+                residual += r2;
+                total_num_ += int(visibility_image_to_vertex[c].size());
+            }
+        }
+        utility::LogDebug("Residual error : {:.6f} (avg : {:.6f})", residual,
+                          residual / total_num_);
+        SetProxyIntensityForVertex(*optimized_mesh_, images_gray_,
+                                   utility::nullopt, *camera_trajectory_,
+                                   visibility_vertex_to_image, proxy_intensity,
+                                   option.image_boundary_margin_);
+    }
+
+    utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
+    SetGeometryColorAverage(*optimized_mesh_, images_color_, utility::nullopt,
+                            *camera_trajectory_, visibility_vertex_to_image,
+                            option.image_boundary_margin_,
+                            option.invisible_vertex_color_knn_);
+
+    return optimized_mesh_;
 }
 
 }  // namespace color_map
