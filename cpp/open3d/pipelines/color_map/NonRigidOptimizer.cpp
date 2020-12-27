@@ -228,16 +228,14 @@ geometry::TriangleMesh RunNonRigidOptimizer(
         const camera::PinholeCameraTrajectory& camera_trajectory,
         const NonRigidOptimizerOption& option) {
     geometry::TriangleMesh opt_mesh = mesh;
+    camera::PinholeCameraTrajectory opt_camera_trajectory = camera_trajectory;
     std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
-    std::shared_ptr<camera::PinholeCameraTrajectory> camera_trajectory_;
     std::vector<std::shared_ptr<geometry::Image>> images_gray_;
     std::vector<std::shared_ptr<geometry::Image>> images_dx_;
     std::vector<std::shared_ptr<geometry::Image>> images_dy_;
     std::vector<std::shared_ptr<geometry::Image>> images_color_;
     std::vector<std::shared_ptr<geometry::Image>> images_depth_;
     images_rgbd_ = images_rgbd;
-    camera_trajectory_ = std::make_shared<camera::PinholeCameraTrajectory>(
-            camera_trajectory);
 
     // images_gray_, images_dx_, images_dy_, images_color_, images_depth_
     // remain unachanged through out the optimizations.
@@ -267,7 +265,7 @@ geometry::TriangleMesh RunNonRigidOptimizer(
     std::vector<std::vector<int>> visibility_image_to_vertex;
     std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
             CreateVertexAndImageVisibility(
-                    opt_mesh, images_depth_, images_mask, *camera_trajectory_,
+                    opt_mesh, images_depth_, images_mask, opt_camera_trajectory,
                     option.maximum_allowable_depth_,
                     option.depth_threshold_for_visibility_check_);
 
@@ -278,10 +276,11 @@ geometry::TriangleMesh RunNonRigidOptimizer(
             images_gray_, option.number_of_vertical_anchors_);
     std::vector<double> proxy_intensity;
     auto n_vertex = opt_mesh.vertices_.size();
-    int n_camera = int(camera_trajectory_->parameters_.size());
+    int n_camera = int(opt_camera_trajectory.parameters_.size());
     SetProxyIntensityForVertex(opt_mesh, images_gray_, warping_fields,
-                               *camera_trajectory_, visibility_vertex_to_image,
-                               proxy_intensity, option.image_boundary_margin_);
+                               opt_camera_trajectory,
+                               visibility_vertex_to_image, proxy_intensity,
+                               option.image_boundary_margin_);
     for (int itr = 0; itr < option.maximum_iteration_; itr++) {
         utility::LogDebug("[Iteration {:04d}] ", itr + 1);
         double residual = 0.0;
@@ -295,11 +294,11 @@ geometry::TriangleMesh RunNonRigidOptimizer(
             double rr_reg = 0.0;
 
             Eigen::Matrix4d pose;
-            pose = camera_trajectory_->parameters_[c].extrinsic_;
+            pose = opt_camera_trajectory.parameters_[c].extrinsic_;
 
-            auto intrinsic = camera_trajectory_->parameters_[c]
+            auto intrinsic = opt_camera_trajectory.parameters_[c]
                                      .intrinsic_.intrinsic_matrix_;
-            auto extrinsic = camera_trajectory_->parameters_[c].extrinsic_;
+            auto extrinsic = opt_camera_trajectory.parameters_[c].extrinsic_;
             Eigen::Matrix4d intr = Eigen::Matrix4d::Zero();
             intr.block<3, 3>(0, 0) = intrinsic;
             intr(3, 3) = 1.0;
@@ -346,7 +345,7 @@ geometry::TriangleMesh RunNonRigidOptimizer(
             for (int j = 0; j < nonrigidval; j++) {
                 warping_fields[c].flow_(j) += result(6 + j);
             }
-            camera_trajectory_->parameters_[c].extrinsic_ = pose;
+            opt_camera_trajectory.parameters_[c].extrinsic_ = pose;
 
 #ifdef _OPENMP
 #pragma omp critical
@@ -359,14 +358,14 @@ geometry::TriangleMesh RunNonRigidOptimizer(
         utility::LogDebug("Residual error : {:.6f}, reg : {:.6f}", residual,
                           residual_reg);
         SetProxyIntensityForVertex(opt_mesh, images_gray_, warping_fields,
-                                   *camera_trajectory_,
+                                   opt_camera_trajectory,
                                    visibility_vertex_to_image, proxy_intensity,
                                    option.image_boundary_margin_);
     }
 
     utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
     SetGeometryColorAverage(opt_mesh, images_color_, warping_fields,
-                            *camera_trajectory_, visibility_vertex_to_image,
+                            opt_camera_trajectory, visibility_vertex_to_image,
                             option.image_boundary_margin_,
                             option.invisible_vertex_color_knn_);
 
