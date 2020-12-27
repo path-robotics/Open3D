@@ -229,19 +229,17 @@ geometry::TriangleMesh RunNonRigidOptimizer(
         const NonRigidOptimizerOption& option) {
     geometry::TriangleMesh opt_mesh = mesh;
     camera::PinholeCameraTrajectory opt_camera_trajectory = camera_trajectory;
-    std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
     std::vector<std::shared_ptr<geometry::Image>> images_gray_;
     std::vector<std::shared_ptr<geometry::Image>> images_dx_;
     std::vector<std::shared_ptr<geometry::Image>> images_dy_;
     std::vector<std::shared_ptr<geometry::Image>> images_color_;
     std::vector<std::shared_ptr<geometry::Image>> images_depth_;
-    images_rgbd_ = images_rgbd;
 
     // images_gray_, images_dx_, images_dy_, images_color_, images_depth_
     // remain unachanged through out the optimizations.
     utility::LogDebug("[ColorMapOptimization] :: CreateGradientImages");
-    for (size_t i = 0; i < images_rgbd_.size(); i++) {
-        auto gray_image = images_rgbd_[i]->color_.CreateFloatImage();
+    for (size_t i = 0; i < images_rgbd.size(); i++) {
+        auto gray_image = images_rgbd[i]->color_.CreateFloatImage();
         auto gray_image_filtered =
                 gray_image->Filter(geometry::Image::FilterType::Gaussian3);
         images_gray_.push_back(gray_image_filtered);
@@ -249,8 +247,8 @@ geometry::TriangleMesh RunNonRigidOptimizer(
                 geometry::Image::FilterType::Sobel3Dx));
         images_dy_.push_back(gray_image_filtered->Filter(
                 geometry::Image::FilterType::Sobel3Dy));
-        auto color = std::make_shared<geometry::Image>(images_rgbd_[i]->color_);
-        auto depth = std::make_shared<geometry::Image>(images_rgbd_[i]->depth_);
+        auto color = std::make_shared<geometry::Image>(images_rgbd[i]->color_);
+        auto depth = std::make_shared<geometry::Image>(images_rgbd[i]->depth_);
         images_color_.push_back(color);
         images_depth_.push_back(depth);
     }
