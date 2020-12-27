@@ -57,7 +57,7 @@ static std::tuple<bool, T> QueryImageIntensity(
         const utility::optional<ImageWarpingField>& optional_warping_field,
         const Eigen::Vector3d& V,
         const camera::PinholeCameraParameters& camera_parameter,
-        int channel,
+        utility::optional<int> channel,
         int image_boundary_margin) {
     float u, v, depth;
     std::tie(u, v, depth) = Project3DPointAndGetUVDepth(V, camera_parameter);
@@ -72,12 +72,13 @@ static std::tuple<bool, T> QueryImageIntensity(
         if (img.TestImageBoundary(u, v, image_boundary_margin)) {
             int u_round = int(u);
             int v_round = int(v);
-            if (channel == -1) {
+            if (channel.has_value()) {
+                return std::make_tuple(
+                        true,
+                        *img.PointerAt<T>(u_round, v_round, channel.value()));
+            } else {
                 return std::make_tuple(true,
                                        *img.PointerAt<T>(u_round, v_round));
-            } else {
-                return std::make_tuple(
-                        true, *img.PointerAt<T>(u_round, v_round, channel));
             }
         }
     }
@@ -188,12 +189,12 @@ void SetProxyIntensityForVertex(
             if (warping_fields.has_value()) {
                 std::tie(valid, gray) = QueryImageIntensity<float>(
                         *images_gray[j], warping_fields.value()[j],
-                        mesh.vertices_[i], camera_trajectory.parameters_[j], -1,
-                        image_boundary_margin);
+                        mesh.vertices_[i], camera_trajectory.parameters_[j],
+                        utility::nullopt, image_boundary_margin);
             } else {
                 std::tie(valid, gray) = QueryImageIntensity<float>(
                         *images_gray[j], utility::nullopt, mesh.vertices_[i],
-                        camera_trajectory.parameters_[j], -1,
+                        camera_trajectory.parameters_[j], utility::nullopt,
                         image_boundary_margin);
             }
 
