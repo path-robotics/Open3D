@@ -95,7 +95,7 @@ struct NonRigidOptimizerOption {
     int invisible_vertex_color_knn_ = 3;
 };
 
-std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
+geometry::TriangleMesh RunNonRigidOptimizer(
         const geometry::TriangleMesh& mesh,
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
         const camera::PinholeCameraTrajectory& camera_trajectory,

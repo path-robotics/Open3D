@@ -222,12 +222,12 @@ static void ComputeJacobianAndResidualNonRigid(
     r = (gray - proxy_intensity[vid]);
 }
 
-std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
+geometry::TriangleMesh RunNonRigidOptimizer(
         const geometry::TriangleMesh& mesh,
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
         const camera::PinholeCameraTrajectory& camera_trajectory,
         const NonRigidOptimizerOption& option) {
-    std::shared_ptr<geometry::TriangleMesh> mesh_;
+    geometry::TriangleMesh opt_mesh = mesh;
     std::vector<std::shared_ptr<geometry::RGBDImage>> images_rgbd_;
     std::shared_ptr<camera::PinholeCameraTrajectory> camera_trajectory_;
     std::vector<std::shared_ptr<geometry::Image>> images_gray_;
@@ -235,7 +235,6 @@ std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
     std::vector<std::shared_ptr<geometry::Image>> images_dy_;
     std::vector<std::shared_ptr<geometry::Image>> images_color_;
     std::vector<std::shared_ptr<geometry::Image>> images_depth_;
-    mesh_ = std::make_shared<geometry::TriangleMesh>(mesh);
     images_rgbd_ = images_rgbd;
     camera_trajectory_ = std::make_shared<camera::PinholeCameraTrajectory>(
             camera_trajectory);
@@ -268,7 +267,7 @@ std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
     std::vector<std::vector<int>> visibility_image_to_vertex;
     std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
             CreateVertexAndImageVisibility(
-                    *mesh_, images_depth_, images_mask, *camera_trajectory_,
+                    opt_mesh, images_depth_, images_mask, *camera_trajectory_,
                     option.maximum_allowable_depth_,
                     option.depth_threshold_for_visibility_check_);
 
@@ -278,9 +277,9 @@ std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
     auto warping_fields_init = CreateWarpingFields(
             images_gray_, option.number_of_vertical_anchors_);
     std::vector<double> proxy_intensity;
-    auto n_vertex = mesh_->vertices_.size();
+    auto n_vertex = opt_mesh.vertices_.size();
     int n_camera = int(camera_trajectory_->parameters_.size());
-    SetProxyIntensityForVertex(*mesh_, images_gray_, warping_fields,
+    SetProxyIntensityForVertex(opt_mesh, images_gray_, warping_fields,
                                *camera_trajectory_, visibility_vertex_to_image,
                                proxy_intensity, option.image_boundary_margin_);
     for (int itr = 0; itr < option.maximum_iteration_; itr++) {
@@ -308,7 +307,7 @@ std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
             auto f_lambda = [&](int i, Eigen::Vector14d& J_r, double& r,
                                 Eigen::Vector14i& pattern) {
                 ComputeJacobianAndResidualNonRigid(
-                        i, J_r, r, pattern, *mesh_, proxy_intensity,
+                        i, J_r, r, pattern, opt_mesh, proxy_intensity,
                         images_gray_[c], images_dx_[c], images_dy_[c],
                         warping_fields[c], warping_fields_init[c], intr,
                         extrinsic, visibility_image_to_vertex[c],
@@ -359,19 +358,19 @@ std::shared_ptr<geometry::TriangleMesh> RunNonRigidOptimizer(
         }
         utility::LogDebug("Residual error : {:.6f}, reg : {:.6f}", residual,
                           residual_reg);
-        SetProxyIntensityForVertex(*mesh_, images_gray_, warping_fields,
+        SetProxyIntensityForVertex(opt_mesh, images_gray_, warping_fields,
                                    *camera_trajectory_,
                                    visibility_vertex_to_image, proxy_intensity,
                                    option.image_boundary_margin_);
     }
 
     utility::LogDebug("[ColorMapOptimization] :: Set Mesh Color");
-    SetGeometryColorAverage(*mesh_, images_color_, warping_fields,
+    SetGeometryColorAverage(opt_mesh, images_color_, warping_fields,
                             *camera_trajectory_, visibility_vertex_to_image,
                             option.image_boundary_margin_,
                             option.invisible_vertex_color_knn_);
 
-    return mesh_;
+    return opt_mesh;
 }
 
 }  // namespace color_map
