@@ -132,7 +132,6 @@ static void ComputeJacobianAndResidualNonRigid(
         const std::shared_ptr<geometry::Image>& images_dx,
         const std::shared_ptr<geometry::Image>& images_dy,
         const ImageWarpingField& warping_fields,
-        const ImageWarpingField& warping_fields_init,
         const Eigen::Matrix4d& intrinsic,
         const Eigen::Matrix4d& extrinsic,
         const std::vector<int>& visibility_image_to_vertex,
@@ -310,8 +309,8 @@ geometry::TriangleMesh RunNonRigidOptimizer(
                 ComputeJacobianAndResidualNonRigid(
                         i, J_r, r, pattern, opt_mesh, proxy_intensity,
                         images_gray[c], images_dx[c], images_dy[c],
-                        warping_fields[c], warping_fields_init[c], intr,
-                        extrinsic, visibility_image_to_vertex[c],
+                        warping_fields[c], intr, extrinsic,
+                        visibility_image_to_vertex[c],
                         option.image_boundary_margin_);
             };
             Eigen::MatrixXd JTJ;
