@@ -272,12 +272,12 @@ geometry::TriangleMesh RunNonRigidOptimizer(
                     option.depth_threshold_for_visibility_check_);
 
     utility::LogDebug("[ColorMapOptimization] :: Run Non-Rigid Optimization");
-    auto warping_fields = CreateWarpingFields(
+    std::vector<ImageWarpingField> warping_fields = CreateWarpingFields(
             images_gray_, option.number_of_vertical_anchors_);
-    auto warping_fields_init = CreateWarpingFields(
+    std::vector<ImageWarpingField> warping_fields_init = CreateWarpingFields(
             images_gray_, option.number_of_vertical_anchors_);
     std::vector<double> proxy_intensity;
-    auto n_vertex = opt_mesh.vertices_.size();
+    size_t n_vertex = opt_mesh.vertices_.size();
     int n_camera = int(opt_camera_trajectory.parameters_.size());
     SetProxyIntensityForVertex(opt_mesh, images_gray_, warping_fields,
                                opt_camera_trajectory,
