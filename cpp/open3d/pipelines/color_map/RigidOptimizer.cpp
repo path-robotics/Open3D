@@ -89,8 +89,11 @@ geometry::TriangleMesh RunRigidOptimizer(
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
         const camera::PinholeCameraTrajectory& camera_trajectory,
         const RigidOptimizerOption& option) {
+    // opt_mesh and opt_camera_trajectory will be optimized.
     geometry::TriangleMesh opt_mesh = mesh;
-    camera::PinholeCameraTrajectory opt_camera_trajectory;
+    camera::PinholeCameraTrajectory opt_camera_trajectory = camera_trajectory;
+
+    // The following properties remain unchanged during optimization.
     std::vector<std::shared_ptr<geometry::Image>> images_gray;
     std::vector<std::shared_ptr<geometry::Image>> images_dx;
     std::vector<std::shared_ptr<geometry::Image>> images_dy;
@@ -100,10 +103,6 @@ geometry::TriangleMesh RunRigidOptimizer(
     std::vector<std::vector<int>> visibility_vertex_to_image;
     std::vector<std::vector<int>> visibility_image_to_vertex;
 
-    opt_camera_trajectory = camera_trajectory;
-
-    // images_gray, images_dx, images_dy, images_color, images_depth
-    // remain unachanged through out the optimizations.
     utility::LogDebug("[ColorMapOptimization] :: CreateGradientImages");
     for (size_t i = 0; i < images_rgbd.size(); i++) {
         auto gray_image = images_rgbd[i]->color_.CreateFloatImage();
