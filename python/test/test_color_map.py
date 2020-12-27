@@ -4,6 +4,7 @@ import re
 import os
 import sys
 from open3d_test import download_fountain_dataset
+import time
 
 
 def load_fountain_dataset():
@@ -68,19 +69,23 @@ def test_color_map():
             o3d.pipelines.color_map.RigidOptimizerOption(maximum_iteration=0))
 
     # Rigid Optimization
+    start = time.time()
     with o3d.utility.VerbosityContextManager(
             o3d.utility.VerbosityLevel.Debug) as cm:
         mesh_optimized = o3d.pipelines.color_map.run_rigid_optimizer(
             mesh, rgbd_images, camera_trajectory,
             o3d.pipelines.color_map.RigidOptimizerOption(maximum_iteration=5))
+    print(f"Rigid optimization takes {time.time() - start}")
 
     # Non-rigid Optimization
+    start = time.time()
     with o3d.utility.VerbosityContextManager(
             o3d.utility.VerbosityLevel.Debug) as cm:
         mesh_optimized = o3d.pipelines.color_map.run_non_rigid_optimizer(
             mesh, rgbd_images, camera_trajectory,
             o3d.pipelines.color_map.NonRigidOptimizerOption(
                 maximum_iteration=5))
+    print(f"Non-rigid optimization takes {time.time() - start}")
 
     # Black box test with hard-coded result values. The results of
     # color_map_optimization are deterministic. This test ensures the refactored
