@@ -68,10 +68,10 @@ int main(int argc, char *argv[]) {
     // Color Map Optimization for 3D Reconstruction with Consumer Depth Cameras,
     // SIGGRAPH 2014
     pipelines::color_map::NonRigidOptimizerOption non_rigid_option;  // Default
-    std::shared_ptr<geometry::TriangleMesh> optimized_mesh =
+    geometry::TriangleMesh optimized_mesh =
             pipelines::color_map::RunNonRigidOptimizer(
                     *mesh, rgbd_images, *camera, non_rigid_option);
-    io::WriteTriangleMesh("color_map_after_optimization.ply", *optimized_mesh);
+    io::WriteTriangleMesh("color_map_after_optimization.ply", optimized_mesh);
 
     return 0;
 }
