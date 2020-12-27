@@ -227,13 +227,19 @@ geometry::TriangleMesh RunNonRigidOptimizer(
         const std::vector<std::shared_ptr<geometry::RGBDImage>>& images_rgbd,
         const camera::PinholeCameraTrajectory& camera_trajectory,
         const NonRigidOptimizerOption& option) {
+    // opt_mesh and opt_camera_trajectory will be optimized.
     geometry::TriangleMesh opt_mesh = mesh;
     camera::PinholeCameraTrajectory opt_camera_trajectory = camera_trajectory;
+
+    // The following properties remain unchanged during optimization.
     std::vector<std::shared_ptr<geometry::Image>> images_gray_;
     std::vector<std::shared_ptr<geometry::Image>> images_dx_;
     std::vector<std::shared_ptr<geometry::Image>> images_dy_;
     std::vector<std::shared_ptr<geometry::Image>> images_color_;
     std::vector<std::shared_ptr<geometry::Image>> images_depth_;
+    std::vector<std::shared_ptr<geometry::Image>> images_mask;
+    std::vector<std::vector<int>> visibility_vertex_to_image;
+    std::vector<std::vector<int>> visibility_image_to_vertex;
 
     // images_gray_, images_dx_, images_dy_, images_color_, images_depth_
     // remain unachanged through out the optimizations.
@@ -254,13 +260,11 @@ geometry::TriangleMesh RunNonRigidOptimizer(
     }
 
     utility::LogDebug("[ColorMapOptimization] :: MakingMasks");
-    auto images_mask = CreateDepthBoundaryMasks(
+    images_mask = CreateDepthBoundaryMasks(
             images_depth_, option.depth_threshold_for_discontinuity_check_,
             option.half_dilation_kernel_size_for_discontinuity_map_);
 
     utility::LogDebug("[ColorMapOptimization] :: VisibilityCheck");
-    std::vector<std::vector<int>> visibility_vertex_to_image;
-    std::vector<std::vector<int>> visibility_image_to_vertex;
     std::tie(visibility_vertex_to_image, visibility_image_to_vertex) =
             CreateVertexAndImageVisibility(
                     opt_mesh, images_depth_, images_mask, opt_camera_trajectory,
