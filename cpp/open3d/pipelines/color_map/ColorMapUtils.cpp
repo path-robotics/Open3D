@@ -24,13 +24,12 @@
 // IN THE SOFTWARE.
 // ----------------------------------------------------------------------------
 
-#include "open3d/pipelines/color_map/BaseOptimizer.h"
-
 #include "open3d/camera/PinholeCameraTrajectory.h"
 #include "open3d/geometry/Image.h"
 #include "open3d/geometry/KDTreeFlann.h"
 #include "open3d/geometry/RGBDImage.h"
 #include "open3d/geometry/TriangleMesh.h"
+#include "open3d/pipelines/color_map/ColorMapUtils.h"
 #include "open3d/pipelines/color_map/ImageWarpingField.h"
 
 namespace open3d {
