@@ -31,7 +31,7 @@
 #ifndef FLANN_SIMPLEX_DOWNHILL_H_
 #define FLANN_SIMPLEX_DOWNHILL_H_
 
-namespace flann
+namespace open3d_flann
 {
 
 /**

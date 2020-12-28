@@ -51,7 +51,7 @@
 #include "flann/util/random.h"
 #include "flann/util/saving.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 struct LshIndexParams : public IndexParams

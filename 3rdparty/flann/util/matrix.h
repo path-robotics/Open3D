@@ -35,7 +35,7 @@
 #include "flann/util/serialization.h"
 #include <stdio.h>
 
-namespace flann
+namespace open3d_flann
 {
 
 typedef unsigned char uchar;

@@ -34,7 +34,7 @@
 #include "flann/general.h"
 #include "flann/algorithms/nn_index.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 struct LinearIndexParams : public IndexParams

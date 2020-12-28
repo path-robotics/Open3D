@@ -42,7 +42,7 @@
 #include "flann/util/timer.h"
 
 
-namespace flann
+namespace open3d_flann
 {
 
 inline int countCorrectMatches(size_t* neighbors, size_t* groundTruth, int n)

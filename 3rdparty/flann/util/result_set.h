@@ -38,7 +38,7 @@
 #include <set>
 #include <vector>
 
-namespace flann
+namespace open3d_flann
 {
 
 /* This record represents a branch point when finding neighbors in

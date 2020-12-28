@@ -33,7 +33,7 @@
 
 #include <map>
 
-namespace flann
+namespace open3d_flann
 {
 
 class CreatorNotFound

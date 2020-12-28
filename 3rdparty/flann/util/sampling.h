@@ -33,7 +33,7 @@
 #include "flann/util/matrix.h"
 #include "flann/util/random.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 template<typename T>

@@ -49,7 +49,7 @@
 #include "flann/util/saving.h"
 #include "flann/util/serialization.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 struct HierarchicalClusteringIndexParams : public IndexParams

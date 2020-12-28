@@ -52,7 +52,7 @@
 
 
 
-namespace flann
+namespace open3d_flann
 {
 
 struct KMeansIndexParams : public IndexParams

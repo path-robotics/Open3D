@@ -44,7 +44,7 @@ typedef unsigned __int64 uint64_t;
 #include "flann/defines.h"
 
 
-namespace flann
+namespace open3d_flann
 {
 
 template<typename T>

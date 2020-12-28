@@ -36,7 +36,7 @@
 #ifdef __cplusplus
 extern "C"
 {
-    using namespace flann;
+    using namespace open3d_flann;
 #endif
 
 

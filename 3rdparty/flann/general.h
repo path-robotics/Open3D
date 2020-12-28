@@ -36,7 +36,7 @@
 #include <cassert>
 #include <limits.h>
 
-namespace flann
+namespace open3d_flann
 {
 
 class FLANNException : public std::runtime_error

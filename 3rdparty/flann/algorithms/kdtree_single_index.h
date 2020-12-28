@@ -45,7 +45,7 @@
 #include "flann/util/random.h"
 #include "flann/util/saving.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 struct KDTreeSingleIndexParams : public IndexParams
@@ -113,7 +113,7 @@ public:
             root_bbox_(other.root_bbox_)
     {
         if (reorder_) {
-            data_ = flann::Matrix<ElementType>(new ElementType[size_*veclen_], size_, veclen_);
+            data_ = open3d_flann::Matrix<ElementType>(new ElementType[size_*veclen_], size_, veclen_);
             std::copy(other.data_[0], other.data_[0]+size_*veclen_, data_[0]);
         }
         copyTree(root_node_, other.root_node_);
@@ -248,7 +248,7 @@ protected:
         root_node_ = divideTree(0, size_, root_bbox_ );   // construct the tree
 
         if (reorder_) {
-            data_ = flann::Matrix<ElementType>(new ElementType[size_*veclen_], size_, veclen_);
+            data_ = open3d_flann::Matrix<ElementType>(new ElementType[size_*veclen_], size_, veclen_);
             for (size_t i=0; i<size_; ++i) {
                 std::copy(points_[vind_[i]], points_[vind_[i]]+veclen_, data_[i]);
             }
@@ -342,7 +342,7 @@ private:
     {
         if (data_.ptr()) {
             delete[] data_.ptr();
-            data_ = flann::Matrix<ElementType>();
+            data_ = open3d_flann::Matrix<ElementType>();
         }
         if (root_node_) root_node_->~Node();
         pool_.free();

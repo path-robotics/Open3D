@@ -72,7 +72,7 @@
 #define FLANN_ARRAY_LEN(a) (sizeof(a)/sizeof(a[0]))
 
 #ifdef __cplusplus
-namespace flann {
+namespace open3d_flann {
 #endif
 
 /* Nearest neighbour index algorithms */

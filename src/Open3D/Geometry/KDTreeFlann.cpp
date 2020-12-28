@@ -116,6 +116,7 @@ int KDTreeFlann::SearchKNN(const T &query,
     // This is optimized code for heavily repeated search.
     // Other flann::Index::knnSearch() implementations lose performance due to
     // memory allocation/deallocation.
+    namespace flann = open3d_flann;
     if (data_.empty() || dataset_size_ <= 0 ||
         size_t(query.rows()) != dimension_ || knn < 0) {
         return -1;
@@ -141,6 +142,7 @@ int KDTreeFlann::SearchRadius(const T &query,
     // Since max_nn is not given, we let flann to do its own memory management.
     // Other flann::Index::radiusSearch() implementations lose performance due
     // to memory management and CPU caching.
+    namespace flann = open3d_flann;
     if (data_.empty() || dataset_size_ <= 0 ||
         size_t(query.rows()) != dimension_) {
         return -1;
@@ -167,6 +169,7 @@ int KDTreeFlann::SearchHybrid(const T &query,
     // It is also the recommended setting for search.
     // Other flann::Index::radiusSearch() implementations lose performance due
     // to memory allocation/deallocation.
+    namespace flann = open3d_flann;
     if (data_.empty() || dataset_size_ <= 0 ||
         size_t(query.rows()) != dimension_ || max_nn < 0) {
         return -1;
@@ -189,6 +192,7 @@ int KDTreeFlann::SearchHybrid(const T &query,
 bool KDTreeFlann::SetRawData(const Eigen::Map<const Eigen::MatrixXd> &data) {
     dimension_ = data.rows();
     dataset_size_ = data.cols();
+    namespace flann = open3d_flann;
     if (dimension_ == 0 || dataset_size_ == 0) {
         utility::LogWarning("[KDTreeFlann::SetRawData] Failed due to no data.");
         return false;

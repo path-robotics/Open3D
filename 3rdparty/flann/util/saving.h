@@ -42,7 +42,7 @@
 #endif
 #define FLANN_SIGNATURE_ "FLANN_INDEX"
 
-namespace flann
+namespace open3d_flann
 {
 
 /**

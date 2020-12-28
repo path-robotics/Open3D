@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace flann
+namespace open3d_flann
 {
 
 /**

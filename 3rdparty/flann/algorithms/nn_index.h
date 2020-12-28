@@ -40,7 +40,7 @@
 #include "flann/util/dynamic_bitset.h"
 #include "flann/util/saving.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 #define KNN_HEAP_THRESHOLD 250
@@ -367,7 +367,7 @@ public:
                                  size_t knn,
                            const SearchParams& params) const
     {
-    	flann::Matrix<size_t> indices_(new size_t[indices.rows*indices.cols], indices.rows, indices.cols);
+    	open3d_flann::Matrix<size_t> indices_(new size_t[indices.rows*indices.cols], indices.rows, indices.cols);
     	int result = knnSearch(queries, indices_, dists, knn, params);
 
     	for (size_t i=0;i<indices.rows;++i) {
@@ -573,7 +573,7 @@ public:
                                     float radius,
                               const SearchParams& params) const
     {
-    	flann::Matrix<size_t> indices_(new size_t[indices.rows*indices.cols], indices.rows, indices.cols);
+    	open3d_flann::Matrix<size_t> indices_(new size_t[indices.rows*indices.cols], indices.rows, indices.cols);
     	int result = radiusSearch(queries, indices_, dists, radius, params);
 
     	for (size_t i=0;i<indices.rows;++i) {

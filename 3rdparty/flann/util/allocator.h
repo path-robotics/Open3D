@@ -35,7 +35,7 @@
 #include <stdio.h>
 
 
-namespace flann
+namespace open3d_flann
 {
 
 /**
@@ -194,7 +194,7 @@ public:
 
 }
 
-inline void* operator new (std::size_t size, flann::PooledAllocator& allocator)
+inline void* operator new (std::size_t size, open3d_flann::PooledAllocator& allocator)
 {
     return allocator.allocateMemory(size) ;
 }

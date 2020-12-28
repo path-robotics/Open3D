@@ -34,7 +34,7 @@
 #include "Open3D/Geometry/KDTreeSearchParam.h"
 #include "Open3D/Registration/Feature.h"
 
-namespace flann {
+namespace open3d_flann {
 template <typename T>
 class Matrix;
 template <typename T>
@@ -91,8 +91,8 @@ private:
 
 protected:
     std::vector<double> data_;
-    std::unique_ptr<flann::Matrix<double>> flann_dataset_;
-    std::unique_ptr<flann::Index<flann::L2<double>>> flann_index_;
+    std::unique_ptr<open3d_flann::Matrix<double>> flann_dataset_;
+    std::unique_ptr<open3d_flann::Index<open3d_flann::L2<double>>> flann_index_;
     size_t dimension_ = 0;
     size_t dataset_size_ = 0;
 };

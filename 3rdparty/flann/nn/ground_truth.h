@@ -35,7 +35,7 @@
 #include "flann/util/matrix.h"
 
 
-namespace flann
+namespace open3d_flann
 {
 
 template <typename Distance>

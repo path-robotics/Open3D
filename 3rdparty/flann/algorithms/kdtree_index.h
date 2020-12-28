@@ -49,7 +49,7 @@
 #include "flann/util/saving.h"
 
 
-namespace flann
+namespace open3d_flann
 {
 
 struct KDTreeIndexParams : public IndexParams

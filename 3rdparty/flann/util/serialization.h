@@ -5,7 +5,7 @@
 #include <map>
 #include <stdio.h>
 
-namespace flann
+namespace open3d_flann
 {
 namespace serialization
 {
@@ -447,5 +447,5 @@ public:
 };
 
 } // namespace serialization
-} // namespace flann
+} // namespace open3d_flann
 #endif // SERIALIZATION_H_

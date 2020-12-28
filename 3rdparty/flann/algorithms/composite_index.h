@@ -36,7 +36,7 @@
 #include "flann/algorithms/kdtree_index.h"
 #include "flann/algorithms/kmeans_index.h"
 
-namespace flann
+namespace open3d_flann
 {
 
 /**

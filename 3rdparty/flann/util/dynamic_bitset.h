@@ -43,7 +43,7 @@ typedef boost::dynamic_bitset<> DynamicBitset;
 
 #include <limits.h>
 
-namespace flann {
+namespace open3d_flann {
 
 /** Class re-implementing the boost version of it
  * This helps not depending on boost, it also does not do the bound checks
@@ -156,7 +156,7 @@ private:
     static const unsigned int cell_bit_size_ = CHAR_BIT * sizeof(size_t);
 };
 
-} // namespace flann
+} // namespace open3d_flann
 
 #endif
 
